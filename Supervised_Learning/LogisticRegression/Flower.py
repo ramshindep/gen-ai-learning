@@ -2,8 +2,9 @@ import pandas as pd
 import pandas as pd 
 from sklearn.preprocessing import LabelEncoder
 from sklearn.linear_model import LogisticRegression
+import joblib
 
-df = pd.read_csv('iris.csv')
+df = pd.read_csv('iris_data.csv')
 
 encoder = LabelEncoder()
 
@@ -21,3 +22,7 @@ output = model.predict(pd.DataFrame([[6.6,2.9,4.6,1.3]],columns=['sepal_length',
 predicted_species = encoder.inverse_transform(output)
 
 print(predicted_species)
+
+joblib.dump(model,'flower_model.pkl')
+joblib.dump(encoder,'flower_encoder.pkl')
+
