@@ -3,30 +3,36 @@ from langchain_core.messages import HumanMessage
 
 llm = ChatOllama(model="gemma:2b")
 
-def detect_action(prompt: str):
-    prompt_lower = prompt.lower()
+def detect_action_with_model(user_input: str):
+    """
+    Use the model itself to decide whether the task is TEXT, IMAGE, AUDIO, or TRANSLATION.
+    """
+    classification_prompt = f"""
+    You are an intelligent assistant. 
+    Based on the following user input, decide what the user wants to do.
+    You must answer with only one of these categories (no extra text):
 
-    if any(word in prompt_lower for word in ["image", "picture", "draw", "generate image", "create image"]):
-        return "IMAGE"
-    elif any(word in prompt_lower for word in ["audio", "sound", "speech", "convert to audio"]):
-        return "AUDIO"
-    elif any(word in prompt_lower for word in ["translate", "translation", "from english", "to marathi"]):
-        return "TRANSLATION"
-    else:
-        return "TEXT"
+    - IMAGE → if the user wants to generate, draw, or create an image.
+    - AUDIO → if the user wants speech, sound, or convert text to audio.
+    - TRANSLATION → if the user wants to translate text from one language to another.
+    - TEXT → for all other general text-based queries.
+
+    User input: "{user_input}"
+    Respond with exactly one of: IMAGE, AUDIO, TRANSLATION, TEXT.
+    """
+
+    response = llm.invoke([HumanMessage(content=classification_prompt)])
+    action = response.content.strip().upper()
+
+    return action
+
 
 def main():
     user_input = input("Enter your prompt: ")
 
-    action_type = detect_action(user_input)
-
-    detailed_prompt = f"The user wants to perform a {action_type.lower()} task. Original input: {user_input}"
-
-    response = llm.invoke([HumanMessage(content=detailed_prompt)])
-
+    action_type = detect_action_with_model(user_input)
     print("Detected Action:", action_type)
-    print("Detailed Prompt Sent to Ollama:", detailed_prompt)
-    print("Ollama Understanding:\n", response.content)
+ 
 
 if _name_ == "_main_":
     main()
