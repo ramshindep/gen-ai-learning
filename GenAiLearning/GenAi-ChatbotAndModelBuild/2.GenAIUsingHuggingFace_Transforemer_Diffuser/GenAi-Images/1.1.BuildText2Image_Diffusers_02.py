@@ -1,13 +1,25 @@
-from diffusers import AutoPipelineForText2Image
-import torch
+from openai import OpenAI
+from PIL import Image
+import requests
+from io import BytesIO
+import os
 
-pipe_txt2img = AutoPipelineForText2Image.from_pretrained(
-    "dreamlike-art/dreamlike-photoreal-2.0",
-    torch_dtype=torch.float16,
-    use_safetensors=True).to("cuda")
+client =OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-prompt="cinematic photo of godzilla eating sushi with a cat in a izakaya, 35mm photograph,film,professional,4k,highly detailed"
-generator = torch.Generator(device="cuda").manual_seed(37)
+prompt="A fantasy landscape with castles and dragons, vibrant colors, highly detailed"
 
-image=pipe_txt2img(prompt,generator=generator).images[0]
+response=client.images.generate(
+    model="dall-e-3",
+    prompt=prompt,
+    n=1,
+    size="1024x1024",
+    quality="standard"
+)
+
+image_url=response.data[0].url
+
+response=requests.get(image_url)
+image=Image.open(BytesIO(response.content))
+image.save("fantasy_landscape.png")
 image.show()
+                 

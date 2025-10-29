@@ -1,25 +1,22 @@
-import torch
-from diffusers import StableDiffusionImg2ImgPipeline
+import os
+from openai import OpenAI
 from PIL import Image
+import requests
+from io import BytesIO
 
-pipe =StableDiffusionImg2ImgPipeline.from_pretrained(
-    "runwayml/stable-diffusion-v1-5",
-    torch_dtype=torch.float16
-)
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-pipe=pipe.to("cuda")
+with open("input_image.png", "rb")as image_file:
+    response=client.images.create_variation(
+        image=image_file,
+        n=1,
+        size="1024x1024"
+    )
+    
+image_url=response.data[0].url
 
-init_image=Image.open("cat.png").convert("RGB")
-init_image=init_image.resize((512,512))
-
-prompt="A cat wearing a beret, high quality, professional photograph"
-
-images=pipe(
-    prompt=prompt,
-    image=init_image,
-    strength=0.75,
-    guidance_scale=7.5,
-    num_inference_steps=50
-).images
-
-images[0].save("cat_beret.png")
+response=requests.get(image_url)
+output_image=Image.open(BytesIO(response.content))
+output_image.save("output_variation.png")
+print("Variation image saved as output_variation.png")
+output_image.show()
